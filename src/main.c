@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
     }
 
     status = mpc_init_party(&party, party_id,
-                            names[(party_id - 1) % 100]);
+                            names[(party_id - 1) % 100]);//初始化
 
     if (status != MPC_OP_SUCCESS)
         raise_error("MPC party initialization failed", status);
@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
     struct timeval start,end; 
     
     gettimeofday(&start, NULL ); 
-    status = mpc_dkg_extension(&party);
+    status = mpc_dkg_extension(&party);//执行dkg操作
     gettimeofday(&end, NULL ); 
     long timeuse =1000000 * ( end.tv_sec - start.tv_sec ) + end.tv_usec - start.tv_usec;  
     printf("DKG time=%f\n",timeuse /1000000.0);  
@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
     struct timeval start1,end1; 
 
     gettimeofday(&start1, NULL ); 
-    status = mpc_signature_phase(&party);
+    status = mpc_signature_phase(&party);//执行签名操作
    gettimeofday(&end1, NULL ); 
     timeuse =1000000 * ( end1.tv_sec - start1.tv_sec ) + end1.tv_usec - start1.tv_usec;  
     printf("Sign time=%f\n",timeuse /1000000.0);  
