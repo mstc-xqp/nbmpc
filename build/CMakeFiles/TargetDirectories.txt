@@ -1,3 +1,0 @@
-/home/MPC-TSS-main/build/CMakeFiles/mpcwithso.dir
-/home/MPC-TSS-main/build/CMakeFiles/edit_cache.dir
-/home/MPC-TSS-main/build/CMakeFiles/rebuild_cache.dir
