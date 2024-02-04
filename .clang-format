@@ -1,0 +1,5 @@
+BasedOnStyle: Chromium
+IndentWidth: 4
+BreakBeforeBraces: Attach
+AlignConsecutiveAssignments: Consecutive
+AllowShortEnumsOnASingleLine: False
