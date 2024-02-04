@@ -30,8 +30,6 @@ ninja
 ./mpc 1
 ./mpc 2
 ./mpc 3
-./mpc 4
-./mpc 5
 ```
 
 ## Working of PoC (Proof of Concept)
