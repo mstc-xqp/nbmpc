@@ -9,8 +9,8 @@
 
 #define MAX_N_PARTIES 100
 #define MIN_N_PARTIES 3
-#define N_PARTIES 3
-#define THRESHOLD 2
+#define N_PARTIES 2
+#define THRESHOLD 1
 #define ENTROPY_SIZE 32
 #define OT_TERM_SIZE 256
 #define ADDR "127.0.0.1"
