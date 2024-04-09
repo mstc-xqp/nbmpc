@@ -18,10 +18,12 @@
 #include "network.h"
 #include "rand.h"
 #include "sha2.h"
+#include <sys/time.h>
 #if USE_FIRMWARE == 1
 #include "coin_utils.h"
 #include "utils.h"
 #include "wallet.h"
+
 #endif
 
 #define HARDENED(i) (i | (1 << 31))
@@ -245,18 +247,35 @@ MPC_STATUS mpc_signature_phase(mpc_party* party) {
         "\n--------------\n"
         "DKG for generating R from polynomial K\n"
         "--------------\n");
+        
+    struct timeval start,end; 
+    gettimeofday(&start, NULL ); 
+    
     if ((status = dkg(party->id, n_parties, threshold, party->server_fd, &K,
                       NULL, &R)) != MPC_OP_SUCCESS)
         return status;
+        
+    gettimeofday(&end, NULL ); 
+    long timeuse =1000000 * ( end.tv_sec - start.tv_sec ) + end.tv_usec - start.tv_usec;    
+    printf("dkg1 time=%f\n",timeuse /1000000.0);
+        
     printf("R generated successfully\n");
+    
 
     printf(
         "\n--------------\n"
         "DKG for generating authenticator W from polynomial A and point R\n"
         "--------------\n");
+        
+    gettimeofday(&start, NULL ); 
     if ((status = dkg(party->id, n_parties, threshold, party->server_fd, &A, &R,
                       &W)) != MPC_OP_SUCCESS)
         return status;
+    gettimeofday(&end, NULL ); 
+    timeuse =1000000 * ( end.tv_sec - start.tv_sec ) + end.tv_usec - start.tv_usec;    
+    printf("dkg2 time=%f\n",timeuse /1000000.0);
+    
+    
     printf("W generated successfully\n");
 
     mpc_parties_ot_init(party);
@@ -276,23 +295,36 @@ MPC_STATUS mpc_signature_phase(mpc_party* party) {
             "Correlated oblivious transfers between parties for "
             "multiplication between polynomials A and K\n"
             "--------------\n");
+        gettimeofday(&start, NULL );
         if ((status = ot(party, A.a0, K.a0, &Ui, n_parties)) != MPC_OP_SUCCESS)
             return status;
+        gettimeofday(&end, NULL );
+        timeuse =1000000 * ( end.tv_sec - start.tv_sec ) + end.tv_usec - start.tv_usec;
+        printf("ot1 time=%f\n",timeuse /1000000.0);
+
+
+
         printf("Oblivious transfers successfully completed\n");
 
         tmp_a0 = *A.a0;
-        bn_multiply(K.a0, &tmp_a0, &curve->order);
+        bn_multiply(K.a0, &tmp_a0, &curve->order); //A i (0) ∗ K i (0)
 
-        bn_addmod(&Ui, &tmp_a0, &curve->order);
+        bn_addmod(&Ui, &tmp_a0, &curve->order);//Ui
 
         shares[party->id - 1] = Ui;
         data.nums             = shares;
 
         printf("\nBroadcasting individual shares from previous OTs\n");
+        
+        gettimeofday(&start, NULL );
         if ((status = broadcast_shares(data, BC_BIGNUM, n_parties, n_parties,
                                        party->server_fd, party->id)) !=
             MPC_OP_SUCCESS)
             return status;
+         gettimeofday(&end, NULL ); 
+         timeuse =1000000 * ( end.tv_sec - start.tv_sec ) + end.tv_usec - start.tv_usec;    
+         printf("broadcast_shares time=%f\n",timeuse /1000000.0);   
+            
         printf("Shares broadcasted successfully\n");
 
         printf("Adding up all the shares\n");
@@ -332,14 +364,21 @@ MPC_STATUS mpc_signature_phase(mpc_party* party) {
             "Correlated oblivious transfers between parties for "
             "multiplication between sharing of K^-1 and group private key\n"
             "--------------\n");
+        
+        gettimeofday(&start, NULL );     
         if ((status = ot(party, &k_share, &lagrange_term, &vi, n_parties)) !=
             MPC_OP_SUCCESS)
             return status;
+        
+         gettimeofday(&end, NULL ); 
+         timeuse =1000000 * ( end.tv_sec - start.tv_sec ) + end.tv_usec - start.tv_usec;    
+         printf("ot2 time=%f\n",timeuse /1000000.0);
+            
         printf("Oblivious transfers successfully completed\n");
 
         bn_multiply(&lagrange_term, &k_share, &curve->order);
         bn_addmod(&vi, &k_share, &curve->order);
-        bn_multiply(&R.x, &vi, &curve->order);
+        bn_multiply(&R.x, &vi, &curve->order); //v_i ∗ r
 
         printf("v_i calculated successfully from the OT shares\n");
     }
@@ -357,10 +396,17 @@ MPC_STATUS mpc_signature_phase(mpc_party* party) {
             "--------------\n");
         hasher_Raw(HASHER_SHA2D, MESSAGE, sizeof(MESSAGE), hash_raw);
         bn_read_be(hash_raw, &hash);
-
+        
+        
+	gettimeofday(&start, NULL ); 
         if ((status = dkg_private_share(party->id, n_parties, party->server_fd,
                                         &A, &si)) != MPC_OP_SUCCESS)
             return status;
+        
+        gettimeofday(&end, NULL ); 
+        timeuse =1000000 * ( end.tv_sec - start.tv_sec ) + end.tv_usec - start.tv_usec;    
+        printf("dkg_private_share time1=%f\n",timeuse /1000000.0);  
+            
 
         bn_multiply(&w, &si, &curve->order);
         bn_multiply(&hash, &si, &curve->order);
